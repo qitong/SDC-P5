@@ -1,63 +1,43 @@
-##Writeup Template
-###You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
----
-
-**Vehicle Detection Project**
+# **Vehicle Detection Project, Author: Qitong Hu**
 
 The goals / steps of this project are the following:
 
-* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
+* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a SVM classifier
 * Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
 * Note: for those first two steps don't forget to normalize your features and randomize a selection for training and testing.
 * Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
 * Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
 * Estimate a bounding box for vehicles detected.
 
-[//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
-[video1]: ./project_video.mp4
-
-## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
-
----
-###Writeup / README
-
-####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
-
-You're reading it!
-
-###Histogram of Oriented Gradients (HOG)
-
-####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
-
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
-
-I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
-
-![alt text][image1]
-
-I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
-
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
+### Submission Content
+* CARND-VEHICLE-DETECTION.ipynb, the notebook is main entrance of this project
+* lesson_functions.py, it defines functions mainly from Udacity courses, I made small modifications on some of them.
+* helper_functions.py, functions to display images and I/O related ones.
+* training/ folder contains training images of cars and notcars, the full set from Udacity Vehicle Tracking S3 bucket
+* test_images/ folder contains those images for test.
 
 
-![alt text][image2]
+## Histogram of Oriented Gradients (HOG)
 
-####2. Explain how you settled on your final choice of HOG parameters.
+### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.hER
+I started by reading in all the `vehicle` and `non-vehicle` images. Those images are stored in training/ foloder, which contains 2 subfolders named `cars` and `notcars`, which contains the full set of image in Udacity Vehicle Tracking S3 bucket respectively.  
+Then to extract the HOG feature, I mainly used the function `get_hog_features()` studied in the couse which warpped `skimage.feature.hog` for its own. And the function to call that to show result is defined in notebook code cell 4 `show_hog_feature()`.  
+Here are the examples of the HOG feature of Vehicles and Non-Vehicles:
+![alt hog_vehicle](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/hog_vehicle.png)
+![alt hog_non_vehicle](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/hog_non_vehicle.png)
 
-I tried various combinations of parameters and...
+### 2. Explain how you settled on your final choice of HOG parameters.
+The main parameters for HOG are orient=9, pix_per_cell=8, cell_per_block=2, those parameters are defined in code cell 6.
+I tried several combination during the course exercise, I think most orient parameters from 8 to 12 gives similar final result in training with SVM, I picked 9. I have tried with other numbers for other 2 paramters, while 8 and 2 respectively gives reasonable result, and since the image itself is 64x64, I think after applying 8 and 2 should make the hog matrix fit more to memory (I guess...)  
+Other parameters which is related to the HOG feature functions (not that close) are color space which I use 'YUV' and channel to apply which I use 'ALL' of those 3, so that in the image above you'll see HOG of Y、U、V channel respectively.   
 
-####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using...
+### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
+I use color features as well, since I can tell the difference from the histograms of cars and non-cars in most of cases, and for bin_spatial I think it is more original and supplement with details losed by color histogram and HOG. At least, with enough training set it won't do anything harmful for my classifier.  
+To prepare the data set for training, I load in the image data, convert it to 'YUV' color space, applied the feature extraction in function `extract_features()` which called `single_img_features()` for individual processing (in `lesson_functions.py`). It extracts HOG feature of all 3 channel, bin spatial feature and color histogram feature (those parameters also defined in code cell 6 in notebook). After extracting the features, I applied standard_scaler from `sklearn.preprocessing` to normalize the data set-wise. Then, I added their y_target decided by which folder it comes from and shuffle them. Finally, split the whole training set to traing and validation at ratio 8:2. (Those code are in code cell 8).  
+Then, I used these data to train a SVM classifer using 'RBF' kernel and default parameters. The classifer give me an accuracy of 99.6% which I am satisified with.  
+
+![alt classifier_accuracy](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/classifier_accuracy.png)
 
 ###Sliding Window Search
 
