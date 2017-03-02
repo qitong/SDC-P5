@@ -49,6 +49,10 @@ The main idea is to use the SVM classifier to decide if those windows are car. A
 Actually, `slide_window()` and `slide_window_with_variant_size()` is a pair, `find_car_in_field()` and `find_car_in_one_shot()` is another pair. First pair is my first implementation which generate windows first and call HOG for each window, while second pair generate the HOG for the whole image and applies window on it. The second implementation is more efficient since it only compute HOG once.  
 For `slide_window()` and `slide_window_with_variant_size()` implementation, the window sizes are 64, 100, 120 respectively, and the y start postion are 300, 350, 400, since the image with lower y position, the top of image, should be sky or other unrelated stuff. The overlap is set to 0.5 times of the length, move 32, 50, 60 in one step. (those are defined in code cell 14). The overlap is larger than the second implementation below because this implementation takes more time to finish thus I cannot use small overlap that generate more windows to compute.  
 For `find_car_in_field()` and `find_car_in_one_shot()` implementation, the window scales are 1, 1.5, 2 respectively and the cell_per_step is set to 2 and thus, for each step, the window will slide for 2 cells.  
+Here are the examples of slide windows generated: (first one is with 0.5 overlap and the later is 0.8 overlap):  
+![alt slide_window_overlap_0.5](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/slide_window_overlap_0.5.png)
+![alt slide_window_overlap_0.8](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/slide_window_overlap_0.8.png)
+
 
 Those are the images show the difference between those 2 implementations:
 ![alt detect_window_method_1](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/detect_window_method_1.png)
@@ -66,24 +70,31 @@ Here are some example images:
 ---
 
 ### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/project_out.mp4) in repo.
+And here's the same one on youtube:
+[![alt Project_output](https://img.youtube.com/vi/MULAa3_NNnM/0.jpg)](https://youtu.be/MULAa3_NNnM)
 
 
 ### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+I recorded the positions of positive detections in each frame of the video. From the positive detections I created a heatmap and then applied a threshold of 2 to that map to identify vehicle positions. I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap. (Those code are in lesson_functions.py, `heatmap_with_threshold()` and `draw_labeled_bboxes()`) I then assumed each blob corresponded to a vehicle. I constructed bounding boxes to cover the area of each blob detected.  
 
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
+Here's an example result showing the heatmap from my test image, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last one of them:
 
-### Here are six frames and their corresponding heatmaps:
+#### Here are 8 frames and their corresponding heatmaps:
 
-![alt text][image5]
+![alt box_detection_1](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/box_detection1.png)
+![alt box_detection_2](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/heatmap1.png)
+![alt heatmap_1](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/box_detection2.png)
+![alt heatmap_2](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/heatmap2.png)
 
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
+### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all 8 frames:  
+![alt label_1](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/label1.png)
+![alt label_2](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/label2.png)
+
 
 ### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
+![alt final_result](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/final_frame_result.png)
 
 
 
