@@ -101,6 +101,9 @@ Here's an example result showing the heatmap from my test image, the result of `
 ## Time Sequence False Positive Rejection:  
 Here is what I miss for last submission. I implement an algorithm to reject false positive detection that not presented constantly in continuous frame. Those code are set under `Time Sequence False Positive Rejection` section in the notebook.  
 I keep track of video frames in a queue object which has a fixed size of 10. For every new frame, after it calculates the heatmap of that frame, it will compare it with the 10 heatmaps before, if at least `frame_thresh+1` frames contain the same point, it will then count as a true positive heat point and pipeline it to label functions, otherwise it will reject it. Note that the heatmap of current frame will then do a binarization (not sure the heat frequence but only count the occurence) and store into the queue pop the earliest one.  
+The following is the middle output of LinearSVC, it is worse than RBF kernel version but much faster (take about 27min to generate whole video). While, since the detection generates more false positive, a method as I implemented above is needed.
+
+![alt final_result](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/LinearSVC_detection.png)
 
 ---
 ## Discussion
