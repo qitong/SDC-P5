@@ -15,7 +15,7 @@ The goals / steps of this project are the following:
 * helper_functions.py, functions to display images and I/O related ones.
 * training/ folder contains training images of cars and notcars, the full set from Udacity Vehicle Tracking S3 bucket
 * test_images/ folder contains those images for test.
-
+* PS: if you want check the code, please unzip the images in the training/ folder first, since it surpass the 1000 files limit for submission, I zip it.
 
 ## Histogram of Oriented Gradients (HOG)
 ---
