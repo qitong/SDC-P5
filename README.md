@@ -18,11 +18,12 @@ The goals / steps of this project are the following:
 
 
 ## Histogram of Oriented Gradients (HOG)
-
+---
 ### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.hER
 I started by reading in all the `vehicle` and `non-vehicle` images. Those images are stored in training/ foloder, which contains 2 subfolders named `cars` and `notcars`, which contains the full set of image in Udacity Vehicle Tracking S3 bucket respectively.  
 Then to extract the HOG feature, I mainly used the function `get_hog_features()` studied in the couse which warpped `skimage.feature.hog` for its own. And the function to call that to show result is defined in notebook code cell 4 `show_hog_feature()`.  
-Here are the examples of the HOG feature of Vehicles and Non-Vehicles:
+Here are the examples of the HOG feature of Vehicles and Non-Vehicles:  
+
 ![alt hog_vehicle](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/hog_vehicle.png)
 ![alt hog_non_vehicle](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/hog_non_vehicle.png)
 
@@ -33,34 +34,42 @@ Other parameters which is related to the HOG feature functions (not that close) 
 
 
 ### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
-I use color features as well, since I can tell the difference from the histograms of cars and non-cars in most of cases, and for bin_spatial I think it is more original and supplement with details losed by color histogram and HOG. At least, with enough training set it won't do anything harmful for my classifier.  
+I use color features as well, since I can tell the difference from the histograms of cars and non-cars in most of cases, and for bin_spatial I think it is more original and supplement with details losed by color histogram and HOG. At least, with enough training set it won't do anything harmful for my classifier. Those functions are defined in the lesson_functions.py, `bin_spatial()` and `color_hist()` respectively.  
 To prepare the data set for training, I load in the image data, convert it to 'YUV' color space, applied the feature extraction in function `extract_features()` which called `single_img_features()` for individual processing (in `lesson_functions.py`). It extracts HOG feature of all 3 channel, bin spatial feature and color histogram feature (those parameters also defined in code cell 6 in notebook). After extracting the features, I applied standard_scaler from `sklearn.preprocessing` to normalize the data set-wise. Then, I added their y_target decided by which folder it comes from and shuffle them. Finally, split the whole training set to traing and validation at ratio 8:2. (Those code are in code cell 8).  
 Then, I used these data to train a SVM classifer using 'RBF' kernel and default parameters. The classifer give me an accuracy of 99.6% which I am satisified with.  
 
 ![alt classifier_accuracy](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/classifier_accuracy.png)
 
-###Sliding Window Search
+## Sliding Window Search
+---
+### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?  
 
-####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
+The sliding window code are set in `slide_window()` and part of `find_car_in_field()` in lesson_functions.py and `slide_window_with_variant_size()` and `find_car_in_one_shot()` in notebook code cell 14 and 18.  
+The main idea is to use the SVM classifier to decide if those windows are car. And from the perspective effect, the car presents in low y position aka far from the point of view should be smaller and those near the bottom, high y, should be larger. Thus, the window scale should change accordingly.  
+Actually, `slide_window()` and `slide_window_with_variant_size()` is a pair, `find_car_in_field()` and `find_car_in_one_shot()` is another pair. First pair is my first implementation which generate windows first and call HOG for each window, while second pair generate the HOG for the whole image and applies window on it. The second implementation is more efficient since it only compute HOG once.  
+For `slide_window()` and `slide_window_with_variant_size()` implementation, the window sizes are 64, 100, 120 respectively, and the y start postion are 300, 350, 400, since the image with lower y position, the top of image, should be sky or other unrelated stuff. The overlap is set to 0.5 times of the length, move 32, 50, 60 in one step. (those are defined in code cell 14). The overlap is larger than the second implementation below because this implementation takes more time to finish thus I cannot use small overlap that generate more windows to compute.  
+For `find_car_in_field()` and `find_car_in_one_shot()` implementation, the window scales are 1, 1.5, 2 respectively and the cell_per_step is set to 2 and thus, for each step, the window will slide for 2 cells.  
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
+Those are the images show the difference between those 2 implementations:
+![alt detect_window_method_1](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/detect_window_method_1.png)
+![alt detect_window_method_2](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/detect_window_method_2.png)
 
-![alt text][image3]
+### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
+Ultimately I searched on 3 scales sliding windows (search from x = 400, y = 300) using YUV 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, then applied heat map and label to detect the car bound rectangle, which provided a nice result.
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
+Here are some example images:
+![alt pipeline_on_image_1](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/pipeline_on_image_1.png)
+![alt pipeline_on_image_2](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/pipeline_on_image_2.png)
 
-![alt text][image4]
+## Video Implementation
 ---
 
-### Video Implementation
-
-####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
 Here's a [link to my video result](./project_video.mp4)
 
 
-####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
+### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
 I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
 
@@ -78,11 +87,9 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 
 
+## Discussion
 ---
-
-###Discussion
-
-####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
-
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+While, the most important problem is not where the pipeline fail but rather the time it takes to detect the car. It takes couple of hours to generate the whole video of less than 1 minute which cannot be directly use as a real time solution in the real world. Yet, it may be due to the computational power of my computer and could be improved by using a more powerful computer. Probably, if not changing the main body of the algorithm we could use some parallel programming, to compute the batch of windows simutaneously. Also we don't need to compute every frame, maybe sample every 1/2 second and during the period using "match_template()" or other low cost algorithms, since it should not change much (differ by speed) in between. 
+Secondly, I think the classifier is highly depending on the training set, since I tried with smallest set and pipeline result is worse. Definitely, more data generate better result. And the feature extraction part relies on the somewhat "ad-hoc" designed (sometimes the car is too far to detect). I think deep learning with CNN architecture could be more useful for this situation. 
 
