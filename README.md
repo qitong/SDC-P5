@@ -16,6 +16,7 @@ The goals / steps of this project are the following:
 * training/ folder contains training images of cars and notcars, the full set from Udacity Vehicle Tracking S3 bucket
 * test_images/ folder contains those images for test.
 * PS: if you want check the code, please unzip the images in the training/ folder first, since it surpass the 1000 files limit for submission, I zip it.
+* PS2: for last submission, there is one rubric point "A method, such as requiring that a detection be found at or near the same position in several subsequent frames, (could be a heat map showing the location of repeat detections) is implemented as a means of rejecting false positives, and this demonstrably reduces the number of false positives. " that I missed. I add this part of code in "Time Sequence False Positive Rejection" section and since the nonlinear SVC takes too long I change it to LinearSVC.
 
 ## Histogram of Oriented Gradients (HOG)
 ---
@@ -96,8 +97,12 @@ Here's an example result showing the heatmap from my test image, the result of `
 ### Here the resulting bounding boxes are drawn onto the last frame in the series:
 ![alt final_result](https://raw.githubusercontent.com/qitong/SDC-P5/master/example_outputs/final_frame_result.png)
 
+---
+## Time Sequence False Positive Rejection:  
+Here is what I miss for last submission. I implement an algorithm to reject false positive detection that not presented constantly in continuous frame. Those code are set under `Time Sequence False Positive Rejection` section in the notebook.  
+I keep track of video frames in a queue object which has a fixed size of 10. For every new frame, after it calculates the heatmap of that frame, it will compare it with the 10 heatmaps before, if at least `frame_thresh+1` frames contain the same point, it will then count as a true positive heat point and pipeline it to label functions, otherwise it will reject it. Note that the heatmap of current frame will then do a binarization (not sure the heat frequence but only count the occurence) and store into the queue pop the earliest one.  
 
-
+---
 ## Discussion
 ---
 ### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
